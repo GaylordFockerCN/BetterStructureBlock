@@ -1,16 +1,9 @@
-buildscript {
-    repositories {
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-    }
-}
-
 plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
-    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
 version = mod_version
@@ -34,7 +27,6 @@ minecraft {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-            arg "-mixin.config=the_casket_of_reveries.mixins.json"
             mods {
                 "${mod_id}" {
                     source sourceSets.main
@@ -44,7 +36,6 @@ minecraft {
 
         client {
             property 'forge.enabledGameTestNamespaces', mod_id
-            arg "-mixin.config=the_casket_of_reveries.mixins.json"
         }
 
         server {
@@ -65,29 +56,8 @@ minecraft {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-repositories {
-    maven {
-        name = 'GeckoLib'
-        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
-    }
-    maven {
-        name = "worldeditapi"
-        url "https://maven.enginehub.org/repo/"
-    }
-
-}
-
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-    implementation fg.deobf('software.bernie.geckolib:geckolib-forge-1.20.1:4.2.2')
-//    implementation fg.deobf('com.sk89q.worldedit:worldedit-forge-mc1.20:7.2.15')
-//    implementation fg.deobf('com.sk89q.worldedit:worldedit-core:7.2.0')
-}
-
-mixin {
-    add sourceSets.main, 'the_casket_of_reveries.mixin-refmap.json'
-    config 'the_casket_of_reveries.mixins.json'
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -115,7 +85,6 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Version'  : project.jar.archiveVersion,
                 'Implementation-Vendor'   : mod_authors,
                 'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                "MixinConfigs": "the_casket_of_reveries.mixins.json"
         ])
     }
 
