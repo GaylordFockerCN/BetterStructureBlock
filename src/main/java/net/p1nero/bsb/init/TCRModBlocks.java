@@ -1,7 +1,7 @@
-package com.gaboj1.tcr.init;
+package net.p1nero.bsb.init;
 
-import com.gaboj1.tcr.BetterBlockStructureMod;
-import com.gaboj1.tcr.block.custom.BetterStructureBlock;
+import net.p1nero.bsb.BetterBlockStructureMod;
+import net.p1nero.bsb.block.custom.BetterStructureBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;

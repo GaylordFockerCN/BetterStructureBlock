@@ -1,6 +1,6 @@
-package com.gaboj1.tcr.init;
+package net.p1nero.bsb.init;
 
-import com.gaboj1.tcr.BetterBlockStructureMod;
+import net.p1nero.bsb.BetterBlockStructureMod;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.DeferredRegister;

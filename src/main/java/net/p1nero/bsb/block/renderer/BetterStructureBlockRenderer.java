@@ -1,6 +1,6 @@
-package com.gaboj1.tcr.block.renderer;
+package net.p1nero.bsb.block.renderer;
 
-import com.gaboj1.tcr.block.entity.BetterStructureBlockEntity;
+import net.p1nero.bsb.block.entity.BetterStructureBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -13,7 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.StructureBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.StructureMode;
 
