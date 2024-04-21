@@ -42,6 +42,9 @@ public class BetterStructureBlockEntity extends StructureBlockEntity {
         return TCRModBlockEntities.BETTER_STRUCTURE_BLOCK_ENTITY.get();
     }
 
+    /**
+     * 就是这个方法限制了变大变小，只要修改一下这个方法即可。
+     */
     @Override
     public boolean detectSize() {
         if (this.getMode() != StructureMode.SAVE) {
@@ -125,6 +128,10 @@ public class BetterStructureBlockEntity extends StructureBlockEntity {
         return boundingBox;
     }
 
+    /**
+     * 需要重写此方法，否则无法读取大结构。。
+     * 在此方法内加了个是否立即加载的判断。
+     */
     @Override
     public void load(CompoundTag nbt) {
         super.load(nbt);

@@ -20,6 +20,7 @@ import net.p1nero.bsb.init.TCRModBlocks;
 import net.p1nero.bsb.init.TCRModItemTabs;
 import net.p1nero.bsb.init.TCRModItems;
 
+import static net.p1nero.bsb.ModConfig.DISABLE_CLIENT_MESSAGE_DISPLAY;
 import static net.p1nero.bsb.ModConfig.ENABLE_BETTER_STRUCTURE_BLOCK_LOAD;
 
 @Mod(BetterBlockStructureMod.MOD_ID)
@@ -59,6 +60,14 @@ public class BetterBlockStructureMod {
                             .then(Commands.argument("value", BoolArgumentType.bool())
                                     .executes((context) -> {
                                         ENABLE_BETTER_STRUCTURE_BLOCK_LOAD.set(BoolArgumentType.getBool(context, "value"));
+                                        return 0;
+                                    })
+                            )
+                    )
+                    .then(Commands.literal("disable_client_message_display")
+                            .then(Commands.argument("value", BoolArgumentType.bool())
+                                    .executes((context) -> {
+                                        DISABLE_CLIENT_MESSAGE_DISPLAY.set(BoolArgumentType.getBool(context, "value"));
                                         return 0;
                                     })
                             )
