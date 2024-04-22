@@ -7,7 +7,7 @@ public class ModConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     //是否立即加载
     public static final ForgeConfigSpec.BooleanValue ENABLE_BETTER_STRUCTURE_BLOCK_LOAD = createBool("enable_better_structure_block_load",false);
-    //禁用客户端显示（默认关闭，太危险！建议仅加载再启用，保存的时候不要启用）
+    //禁用客户端显示（本质上就是篡改输出信息为空字符串，并且换用在装备栏上方显示
     public static final ForgeConfigSpec.BooleanValue DISABLE_CLIENT_MESSAGE_DISPLAY = createBool("disable_client_message_display",false);
     static final ForgeConfigSpec SPEC = BUILDER.build();
 

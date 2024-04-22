@@ -1,8 +1,8 @@
 package net.p1nero.bsb.block.entity;
 
 import net.p1nero.bsb.ModConfig;
-import net.p1nero.bsb.init.TCRModBlockEntities;
-import net.p1nero.bsb.init.TCRModBlocks;
+import net.p1nero.bsb.init.ModBlockEntities;
+import net.p1nero.bsb.init.ModBlocks;
 import com.google.common.collect.Lists;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.client.Minecraft;
@@ -39,7 +39,7 @@ public class BetterStructureBlockEntity extends StructureBlockEntity {
 
     @Override
     public BlockEntityType<?> getType() {
-        return TCRModBlockEntities.BETTER_STRUCTURE_BLOCK_ENTITY.get();
+        return ModBlockEntities.BETTER_STRUCTURE_BLOCK_ENTITY.get();
     }
 
     /**
@@ -92,7 +92,7 @@ public class BetterStructureBlockEntity extends StructureBlockEntity {
 
         for(BlockPos blockpos : BlockPos.withinManhattan(minPos, maxPos.getX()-minPos.getX(), maxPos.getY()-minPos.getY(), maxPos.getZ()-minPos.getZ())) {
             BlockState blockstate = this.level.getBlockState(blockpos);
-            if (blockstate.is(Blocks.STRUCTURE_BLOCK) || blockstate.is(TCRModBlocks.BETTER_STRUCTURE_BLOCK.get())) {
+            if (blockstate.is(Blocks.STRUCTURE_BLOCK) || blockstate.is(ModBlocks.BETTER_STRUCTURE_BLOCK.get())) {
                 assert this.level != null;
                 BlockEntity entity = this.level.getBlockEntity(blockpos);
                 if (entity instanceof StructureBlockEntity) {

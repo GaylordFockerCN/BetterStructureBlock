@@ -13,7 +13,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 import java.util.function.Supplier;
 
-public class TCRModBlocks {
+public class ModBlocks {
     public static final DeferredRegister<Block> REGISTRY =
             DeferredRegister.create(ForgeRegistries.BLOCKS, BetterBlockStructureMod.MOD_ID);
 
@@ -27,7 +27,7 @@ public class TCRModBlocks {
     }
 
     private static <T extends Block> RegistryObject<Item> registerBlockItem(String name, RegistryObject<T> block){
-        return TCRModItems.REGISTRY.register(name, ()->new BlockItem(block.get(),new Item.Properties()));
+        return ModItems.REGISTRY.register(name, ()->new BlockItem(block.get(),new Item.Properties()));
     }
 
 }
