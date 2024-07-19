@@ -1,5 +1,6 @@
 {
   "item_group.better_structure_block.better_structure_block": "Better Structure Block",
   "block.better_structure_block.better_structure_block": "Better Structure Block",
-  "config.better_structure_block.enable_better_structure_block_load": "Should better structural blocks be loaded immediately (for nested structures)"
+  "config.better_structure_block.enable_better_structure_block_load": "load structure immediately when load structure block. recommend to set false when developing.",
+  "config.better_structure_block.disable_client_message_display": "do not show message when structure load successfully, it will give a better feeling to player."
 }

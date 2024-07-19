@@ -1,6 +1,5 @@
-package net.p1nero.bsb.block.custom;
+package net.p1nero.bsb.block;
 
-import net.p1nero.bsb.block.entity.BetterStructureBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.StructureBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;

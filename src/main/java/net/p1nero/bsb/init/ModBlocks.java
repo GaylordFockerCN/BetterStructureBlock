@@ -1,7 +1,7 @@
 package net.p1nero.bsb.init;
 
-import net.p1nero.bsb.BetterBlockStructureMod;
-import net.p1nero.bsb.block.custom.BetterStructureBlock;
+import net.p1nero.bsb.BetterStructureBlockMod;
+import net.p1nero.bsb.block.BetterStructureBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 
 public class ModBlocks {
     public static final DeferredRegister<Block> REGISTRY =
-            DeferredRegister.create(ForgeRegistries.BLOCKS, BetterBlockStructureMod.MOD_ID);
+            DeferredRegister.create(ForgeRegistries.BLOCKS, BetterStructureBlockMod.MOD_ID);
 
     public static final RegistryObject<Block> BETTER_STRUCTURE_BLOCK = registerBlock("better_structure_block",
             ()-> new BetterStructureBlock(BlockBehaviour.Properties.copy(Blocks.STRUCTURE_BLOCK)));
@@ -26,8 +26,8 @@ public class ModBlocks {
         return toReturn;
     }
 
-    private static <T extends Block> RegistryObject<Item> registerBlockItem(String name, RegistryObject<T> block){
-        return ModItems.REGISTRY.register(name, ()->new BlockItem(block.get(),new Item.Properties()));
+    private static <T extends Block> void registerBlockItem(String name, RegistryObject<T> block){
+        ModItems.REGISTRY.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
     }
 
 }

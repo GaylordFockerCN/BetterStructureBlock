@@ -2,12 +2,13 @@ package net.p1nero.bsb;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.logging.LogUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.event.RegisterCommandsEvent;
-import net.p1nero.bsb.block.renderer.BetterStructureBlockRenderer;
+import net.p1nero.bsb.block.BetterStructureBlockRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -21,16 +22,17 @@ import net.p1nero.bsb.init.ModBlockEntities;
 import net.p1nero.bsb.init.ModBlocks;
 import net.p1nero.bsb.init.ModItemTabs;
 import net.p1nero.bsb.init.ModItems;
+import org.slf4j.Logger;
 
 import static net.p1nero.bsb.ModConfig.DISABLE_CLIENT_MESSAGE_DISPLAY;
-import static net.p1nero.bsb.ModConfig.ENABLE_BETTER_STRUCTURE_BLOCK_LOAD;
+import static net.p1nero.bsb.ModConfig.LOAD_DIRECTLY;
 
-@Mod(BetterBlockStructureMod.MOD_ID)
-public class BetterBlockStructureMod {
-
+@Mod(BetterStructureBlockMod.MOD_ID)
+public class BetterStructureBlockMod {
+    public static final Logger LOGGER = LogUtils.getLogger();
     public static final String MOD_ID = "better_structure_block";
 
-    public BetterBlockStructureMod(){
+    public BetterStructureBlockMod(){
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 
         ModItems.REGISTRY.register(bus);
@@ -52,7 +54,7 @@ public class BetterBlockStructureMod {
         }
     }
 
-    @Mod.EventBusSubscriber(modid = BetterBlockStructureMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    @Mod.EventBusSubscriber(modid = BetterStructureBlockMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class ModEvent{
         @SubscribeEvent
         public static void registerCommands(RegisterCommandsEvent event) {
@@ -60,7 +62,7 @@ public class BetterBlockStructureMod {
             dispatcher.register(Commands.literal("better_structure_block").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
                     .then(Commands.literal("load_when_place")
                             .then(Commands.argument("value", BoolArgumentType.bool())
-                                    .executes((context) -> setConfig(ENABLE_BETTER_STRUCTURE_BLOCK_LOAD, BoolArgumentType.getBool(context, "value"), context.getSource()))
+                                    .executes((context) -> setConfig(LOAD_DIRECTLY, BoolArgumentType.getBool(context, "value"), context.getSource()))
                             )
                     )
                     .then(Commands.literal("disable_client_message_display")

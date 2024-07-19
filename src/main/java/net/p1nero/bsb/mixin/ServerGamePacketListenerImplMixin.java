@@ -1,50 +1,92 @@
 package net.p1nero.bsb.mixin;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundSetStructureBlockPacket;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.StructureBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.p1nero.bsb.BetterStructureBlockMod;
 import net.p1nero.bsb.ModConfig;
+import net.p1nero.bsb.block.BetterStructureBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * 通过mixin实现不显示客户端消息，使DisplayClientMessage的第一个参数为空。
- * {@link ServerGamePacketListenerImpl#handleSetStructureBlock(ServerboundSetStructureBlockPacket)}
- * @author LZY
+ * 通过mixin实现绕开玩家权限立即加载结构，并且如果是需要点两次的话就再点一次。
+ * @author p1nero
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public class ServerGamePacketListenerImplMixin  {
-
-//    @Inject(method = "handleSetStructureBlock(Lnet/minecraft/network/protocol/game/ServerboundSetStructureBlockPacket;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;displayClientMessage(Lnet/minecraft/network/chat/Component;Z)V"), cancellable = true)
-//    private void injected(CallbackInfo ci) {
-//        if(ModConfig.DISABLE_CLIENT_MESSAGE_DISPLAY.get() && ModConfig.ENABLE_BETTER_STRUCTURE_BLOCK_LOAD.get()){
-//            ci.cancel();
-//        }
-//    }
-
-//    /**
-//     * 如果隐藏的话，内容空还不行，还得在武器栏上面显示。不然左边还是会有带背景的空白消息。
-//     */
-//    @ModifyArgs(method = "handleSetStructureBlock(Lnet/minecraft/network/protocol/game/ServerboundSetStructureBlockPacket;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;displayClientMessage(Lnet/minecraft/network/chat/Component;Z)V"))
-//    private void injected(Args args) {
-//        args.set(0, ModConfig.DISABLE_CLIENT_MESSAGE_DISPLAY.get() ? Component.empty() : args.get(0));
-//        args.set(1, ModConfig.DISABLE_CLIENT_MESSAGE_DISPLAY.get() || (boolean)args.get(1));
-//    }
+    @Shadow
+    public ServerPlayer player;
 
     /**
-      * 如果隐藏的话，内容空还不行，还得在武器栏上面显示。不然左边还是会有带背景的空白消息。
-      */
-    @ModifyArg(method = "handleSetStructureBlock(Lnet/minecraft/network/protocol/game/ServerboundSetStructureBlockPacket;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;displayClientMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 0)
-    private Component injected(Component arg) {
-        return ModConfig.DISABLE_CLIENT_MESSAGE_DISPLAY.get() ? Component.empty() : arg;
-    }
+     * 绕开玩家权限认证，立即加载。并根据配置项选择是否输出成功构造的信息
+     */
+    @Inject(method = "handleSetStructureBlock(Lnet/minecraft/network/protocol/game/ServerboundSetStructureBlockPacket;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V", shift = At.Shift.AFTER), cancellable = true)
+    private void injected(ServerboundSetStructureBlockPacket packet, CallbackInfo ci) {
+        BlockPos blockpos = packet.getPos();
+        BlockState blockstate = this.player.level().getBlockState(blockpos);
+        BlockEntity blockentity = this.player.level().getBlockEntity(blockpos);
+        if (blockentity instanceof BetterStructureBlockEntity blockEntity) {
+            blockEntity.setMode(packet.getMode());
+            blockEntity.setStructureName(packet.getName());
+            blockEntity.setStructurePos(packet.getOffset());
+            blockEntity.setStructureSize(packet.getSize());
+            blockEntity.setMirror(packet.getMirror());
+            blockEntity.setRotation(packet.getRotation());
+            blockEntity.setMetaData(packet.getData());
+            blockEntity.setIgnoreEntities(packet.isIgnoreEntities());
+            blockEntity.setShowAir(packet.isShowAir());
+            blockEntity.setShowBoundingBox(packet.isShowBoundingBox());
+            blockEntity.setIntegrity(packet.getIntegrity());
+            blockEntity.setSeed(packet.getSeed());
+            if (blockEntity.hasStructureName()) {
+                String s = blockEntity.getStructureName();
+                if (packet.getUpdateType() == StructureBlockEntity.UpdateType.SAVE_AREA) {
+                    if (blockEntity.saveStructure()) {
+                        this.player.displayClientMessage(Component.translatable("structure_block.save_success", s), false);
+                    } else {
+                        this.player.displayClientMessage(Component.translatable("structure_block.save_failure", s), false);
+                    }
+                } else if (packet.getUpdateType() == StructureBlockEntity.UpdateType.LOAD_AREA) {
+                    BetterStructureBlockMod.LOGGER.info("try to load custom structure block on server: {}", blockEntity.getStructureName());
+                    if (!blockEntity.isStructureLoadable()) {
+                        this.player.displayClientMessage(Component.translatable("structure_block.load_not_found", s), false);
+                    } else if (blockEntity.loadStructure(this.player.serverLevel())) {
+                        if(!ModConfig.DISABLE_CLIENT_MESSAGE_DISPLAY.get()){
+                            this.player.displayClientMessage(Component.translatable("structure_block.load_success", s), false);
+                        }
+                    } else {
+                        if(ModConfig.LOAD_DIRECTLY.get()){
+                            this.player.displayClientMessage(Component.literal("Try to load again."), false);
+                            blockEntity.loadStructure(this.player.serverLevel());
+                            BetterStructureBlockMod.LOGGER.info("try to load custom structure block AGAIN on server: {}", blockEntity.getStructureName());
+                        }else {
+                            this.player.displayClientMessage(Component.translatable("structure_block.load_prepare", s), false);
+                        }
+                    }
+                } else if (packet.getUpdateType() == StructureBlockEntity.UpdateType.SCAN_AREA) {
+                    if (blockEntity.detectSize()) {
+                        this.player.displayClientMessage(Component.translatable("structure_block.size_success", s), false);
+                    } else {
+                        this.player.displayClientMessage(Component.translatable("structure_block.size_failure"), false);
+                    }
+                }
+            } else {
+                this.player.displayClientMessage(Component.translatable("structure_block.invalid_structure_name", packet.getName()), false);
+            }
 
-    @ModifyArg(method = "handleSetStructureBlock(Lnet/minecraft/network/protocol/game/ServerboundSetStructureBlockPacket;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;displayClientMessage(Lnet/minecraft/network/chat/Component;Z)V"), index = 1)
-    private boolean injected(boolean arg) {
-        return ModConfig.DISABLE_CLIENT_MESSAGE_DISPLAY.get() || arg;
-    }
+            blockEntity.setChanged();
+            this.player.level().sendBlockUpdated(blockpos, blockstate, blockstate, 3);
+            ci.cancel();
+        }
 
+    }
 }

@@ -1,20 +1,19 @@
 package net.p1nero.bsb;
 
-import net.minecraft.client.resources.language.I18n;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class ModConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     //是否立即加载
-    public static final ForgeConfigSpec.BooleanValue ENABLE_BETTER_STRUCTURE_BLOCK_LOAD = createBool("enable_better_structure_block_load",false);
+    public static final ForgeConfigSpec.BooleanValue LOAD_DIRECTLY = createBool("enable_better_structure_block_load",false,"load structure immediately when load structure block. recommend to set false when developing.");
     //禁用客户端显示（本质上就是篡改输出信息为空字符串，并且换用在装备栏上方显示
-    public static final ForgeConfigSpec.BooleanValue DISABLE_CLIENT_MESSAGE_DISPLAY = createBool("disable_client_message_display",false);
+    public static final ForgeConfigSpec.BooleanValue DISABLE_CLIENT_MESSAGE_DISPLAY = createBool("disable_client_message_display",true,"do not show message when structure load successfully, it will give a better feeling to player.");
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
-    private static ForgeConfigSpec.BooleanValue createBool(String key, boolean defaultValue){
+    private static ForgeConfigSpec.BooleanValue createBool(String key, boolean defaultValue, String... comment){
         return BUILDER
-                .comment(I18n.get("config."+BetterBlockStructureMod.MOD_ID+"."+key))
-                .translation("config."+BetterBlockStructureMod.MOD_ID+"."+key)
+                .comment(comment)
+                .translation("config."+ BetterStructureBlockMod.MOD_ID+"."+key)
                 .define(key, defaultValue);
     }
 
