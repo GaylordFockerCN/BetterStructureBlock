@@ -17,7 +17,7 @@ public class HandleStructureBlockLoad {
     public static void load(StructureBlockEntity entity){
         if(Minecraft.getInstance().level != null && Minecraft.getInstance().player != null){
             StructureBlockEditScreen screen = new StructureBlockEditScreen(entity);
-            Minecraft.getInstance().setScreen(screen);
+//            Minecraft.getInstance().setScreen(screen);
             screen.loadButton.onPress();
             BetterStructureBlockMod.LOGGER.info("post load request : {} ",entity.getStructureName());
         }

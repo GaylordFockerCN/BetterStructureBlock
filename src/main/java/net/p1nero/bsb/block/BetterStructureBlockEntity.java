@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 
 public class BetterStructureBlockEntity extends StructureBlockEntity {
 
-    public static final int MAX_SIZE = 256;
 
     //用于判断有没有加载过，省的一直重复加载
     public boolean generated = false;
@@ -43,7 +42,7 @@ public class BetterStructureBlockEntity extends StructureBlockEntity {
     }
 
     /**
-     * 就是这个方法限制了变大变小，只要修改一下这个方法即可。
+     * 重点是修改返回值
      */
     @Override
     public boolean detectSize() {
@@ -51,8 +50,9 @@ public class BetterStructureBlockEntity extends StructureBlockEntity {
             return false;
         } else {
             BlockPos blockpos = this.getBlockPos();
-            BlockPos blockPos1 = new BlockPos(blockpos.getX() - MAX_SIZE, 0, blockpos.getZ() - MAX_SIZE);
-            BlockPos blockPos2 = new BlockPos(blockpos.getX() + MAX_SIZE, MAX_SIZE-1, blockpos.getZ() + MAX_SIZE);
+            int maxSize = ModConfig.SEARCH_SIZE.get();//搜索角落方块的范围，太大会有问题
+            BlockPos blockPos1 = new BlockPos(blockpos.getX() - maxSize, this.level.getMinBuildHeight(), blockpos.getZ() - maxSize);
+            BlockPos blockPos2 = new BlockPos(blockpos.getX() + maxSize, this.level.getMaxBuildHeight() - 1, blockpos.getZ() + maxSize);
             List<StructureBlockEntity> list = this.getRelatedCorners(blockPos1, blockPos2);
             List<StructureBlockEntity> list1 = this.filterRelatedCornerBlocks(list);
             if (list1.isEmpty()) {
@@ -95,7 +95,6 @@ public class BetterStructureBlockEntity extends StructureBlockEntity {
             assert this.level != null;
             BlockState blockstate = this.level.getBlockState(blockpos);
             if (blockstate.is(Blocks.STRUCTURE_BLOCK) || blockstate.is(ModBlocks.BETTER_STRUCTURE_BLOCK.get())) {
-                assert this.level != null;
                 BlockEntity entity = this.level.getBlockEntity(blockpos);
                 if (entity instanceof StructureBlockEntity) {
                     list.add((StructureBlockEntity)entity);
