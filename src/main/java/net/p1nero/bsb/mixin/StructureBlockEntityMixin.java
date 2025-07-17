@@ -35,9 +35,6 @@ import java.util.stream.Stream;
 
 @Mixin(StructureBlockEntity.class)
 public abstract class StructureBlockEntityMixin extends BlockEntity {
-
-    @Unique
-    private boolean better_structure_block$generated;
     @Unique
     private static boolean better_structure_block$IS_LOADING;
 
@@ -63,8 +60,6 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
     @Shadow public abstract void setStructureSize(Vec3i p_155798_);
 
     @Shadow protected abstract void updateBlockState();
-
-    @Shadow public abstract boolean loadStructure(ServerLevel p_59843_);
 
     @Shadow public abstract String getStructureName();
 
@@ -151,16 +146,10 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
         setStructureSize(new BlockPos(l, i1, j1));
         this.updateBlockState();
 
-        better_structure_block$generated = tag.getBoolean("better_structure_block_generated");
         //当加载的时候强制加载一下区块，为了在结构内包含结构方块时以生成结构，省的调用红石。
         //客户端看到结构方块就模拟按键请求加载，服务端就直接加载（似乎参数没同步，无法加载？）
-        if(this.level != null && !better_structure_block$generated && BetterStructureBlockConfig.LOAD_DIRECTLY.get()){
-            if(this.level instanceof ServerLevel serverLevel){
-                loadStructure(serverLevel);
-            }else {
-                Objects.requireNonNull(Minecraft.getInstance().getConnection()).send(new ServerboundSetStructureBlockPacket(getBlockPos(), StructureBlockEntity.UpdateType.LOAD_AREA, getMode(), getStructureName(), getStructurePos(), getStructureSize(), getMirror(), getRotation(), getMetaData(), isIgnoreEntities(), getShowAir(), getShowBoundingBox(), getIntegrity(), getSeed()));
-            }
-            better_structure_block$generated = true;
+        if(this.level != null && level.isClientSide && BetterStructureBlockConfig.LOAD_DIRECTLY.get()){
+            Objects.requireNonNull(Minecraft.getInstance().getConnection()).send(new ServerboundSetStructureBlockPacket(getBlockPos(), StructureBlockEntity.UpdateType.LOAD_AREA, getMode(), getStructureName(), getStructurePos(), getStructureSize(), getMirror(), getRotation(), getMetaData(), isIgnoreEntities(), getShowAir(), getShowBoundingBox(), getIntegrity(), getSeed()));
         }
     }
 
@@ -212,12 +201,6 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
             return true;
         }
     }
-
-    @Inject(method = "saveAdditional", at = @At("TAIL"))
-    protected void better_structure_block$saveAdditional(CompoundTag tag, CallbackInfo ci) {
-        tag.putBoolean("better_structure_block_generated", better_structure_block$generated);
-    }
-
 
 
 }
