@@ -1,6 +1,0 @@
-{
-  "block.better_structure_block.better_structure_block": "更好的结构方块",
-  "item_group.better_structure_block.better_structure_block": "更好的结构方块",
-  "config.better_structure_block.enable_better_structure_block_load": "更好的结构方块是否立即加载",
-  "config.better_structure_block.disable_client_message_display": "不显示加载成功的消息，给玩家更好的游戏体验。"
-}

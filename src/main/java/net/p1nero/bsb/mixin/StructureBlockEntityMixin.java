@@ -2,6 +2,7 @@ package net.p1nero.bsb.mixin;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ServerboundSetStructureBlockPacket;
@@ -21,6 +22,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.BlockRotProce
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.p1nero.bsb.BetterStructureBlockConfig;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -64,8 +66,6 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
 
     @Shadow protected abstract void updateBlockState();
 
-    @Shadow public abstract boolean loadStructure(ServerLevel p_59843_);
-
     @Shadow public abstract String getStructureName();
 
     @Shadow public abstract BlockPos getStructurePos();
@@ -88,8 +88,6 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
 
     @Shadow public abstract long getSeed();
 
-    @Shadow public String author;
-
     @Shadow
     public static RandomSource createRandom(long p_222889_) {
         return null;
@@ -105,29 +103,49 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
 
     @Shadow private float integrity;
 
+    @Shadow private StructureMode mode;
+
+    @Shadow public abstract boolean placeStructureIfSameSize(ServerLevel level);
+
+    @Shadow public abstract boolean loadStructureInfo(ServerLevel level);
+
+    @Shadow protected abstract void loadStructureInfo(StructureTemplate structureTemplate);
+
+    @Shadow public abstract void setStructureName(@Nullable String structureName);
+
+    @Shadow private String author;
+
+    @Shadow private String metaData;
+
+    @Shadow private boolean powered;
+
+    @Shadow private boolean showAir;
+
+    @Shadow private boolean showBoundingBox;
+
     /**
      * 调检测范围
      */
     @Inject(method = "detectSize", at = @At("HEAD"), cancellable = true)
     public void better_structure_block$detectSize(CallbackInfoReturnable<Boolean> cir) {
-        if (this.getMode() != StructureMode.SAVE) {
-            cir.setReturnValue(false);
+        if (this.mode != StructureMode.SAVE) {
+            cir .setReturnValue(false);
         } else {
-            BlockPos $$0 = this.getBlockPos();
-            int size = BetterStructureBlockConfig.SEARCH_SIZE.get();
-            BlockPos $$2 = new BlockPos($$0.getX() - size, this.level.getMinBuildHeight(), $$0.getZ() - size);
-            BlockPos $$3 = new BlockPos($$0.getX() + size, this.level.getMaxBuildHeight() - 1, $$0.getZ() + size);
-            Stream<BlockPos> $$4 = this.getRelatedCorners($$2, $$3);
-            cir.setReturnValue(calculateEnclosingBoundingBox($$0, $$4).filter((p_155790_) -> {
-                int i = p_155790_.maxX() - p_155790_.minX();
-                int j = p_155790_.maxY() - p_155790_.minY();
-                int k = p_155790_.maxZ() - p_155790_.minZ();
-                if (i > 1 && j > 1 && k > 1) {
-                    this.structurePos = new BlockPos(p_155790_.minX() - $$0.getX() + 1, p_155790_.minY() - $$0.getY() + 1, p_155790_.minZ() - $$0.getZ() + 1);
-                    this.structureSize = new Vec3i(i - 1, j - 1, k - 1);
+            BlockPos blockpos = this.getBlockPos();
+            int i =  BetterStructureBlockConfig.SEARCH_SIZE.get();
+            BlockPos blockpos1 = new BlockPos(blockpos.getX() - i, this.level.getMinBuildHeight(), blockpos.getZ() - i);
+            BlockPos blockpos2 = new BlockPos(blockpos.getX() + i, this.level.getMaxBuildHeight() - 1, blockpos.getZ() + i);
+            Stream<BlockPos> stream = this.getRelatedCorners(blockpos1, blockpos2);
+            cir.setReturnValue(calculateEnclosingBoundingBox(blockpos, stream).filter((p_155790_) -> {
+                int j = p_155790_.maxX() - p_155790_.minX();
+                int k = p_155790_.maxY() - p_155790_.minY();
+                int l = p_155790_.maxZ() - p_155790_.minZ();
+                if (j > 1 && k > 1 && l > 1) {
+                    this.structurePos = new BlockPos(p_155790_.minX() - blockpos.getX() + 1, p_155790_.minY() - blockpos.getY() + 1, p_155790_.minZ() - blockpos.getZ() + 1);
+                    this.structureSize = new Vec3i(j - 1, k - 1, l - 1);
                     this.setChanged();
-                    BlockState $$5 = this.level.getBlockState($$0);
-                    this.level.sendBlockUpdated($$0, $$5, $$5, 3);
+                    BlockState blockstate = this.level.getBlockState(blockpos);
+                    this.level.sendBlockUpdated(blockpos, blockstate, blockstate, 3);
                     return true;
                 } else {
                     return false;
@@ -139,16 +157,50 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
     /**
      * 解除大小限制
      */
-    @Inject(method = "load", at = @At("TAIL"))
-    public void better_structure_block$load(CompoundTag tag, CallbackInfo ci) {
+    @Inject(method = "loadAdditional", at = @At("HEAD"), cancellable = true)
+    public void better_structure_block$load(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
+        super.loadAdditional(tag, registries);
+        this.setStructureName(tag.getString("name"));
+        this.author = tag.getString("author");
+        this.metaData = tag.getString("metadata");
         int i = tag.getInt("posX");
         int j = tag.getInt("posY");
         int k = tag.getInt("posZ");
-        setStructurePos(new BlockPos(i, j, k));
+        this.structurePos = new BlockPos(i, j, k);
         int l = Math.max(tag.getInt("sizeX"), 0);
         int i1 = Math.max(tag.getInt("sizeY"), 0);
         int j1 = Math.max(tag.getInt("sizeZ"), 0);
-        setStructureSize(new BlockPos(l, i1, j1));
+        this.structureSize = new Vec3i(l, i1, j1);
+
+        try {
+            this.rotation = Rotation.valueOf(tag.getString("rotation"));
+        } catch (IllegalArgumentException var12) {
+            this.rotation = Rotation.NONE;
+        }
+
+        try {
+            this.mirror = Mirror.valueOf(tag.getString("mirror"));
+        } catch (IllegalArgumentException var11) {
+            this.mirror = Mirror.NONE;
+        }
+
+        try {
+            this.mode = StructureMode.valueOf(tag.getString("mode"));
+        } catch (IllegalArgumentException var10) {
+            this.mode = StructureMode.DATA;
+        }
+
+        this.ignoreEntities = tag.getBoolean("ignoreEntities");
+        this.powered = tag.getBoolean("powered");
+        this.showAir = tag.getBoolean("showair");
+        this.showBoundingBox = tag.getBoolean("showboundingbox");
+        if (tag.contains("integrity")) {
+            this.integrity = tag.getFloat("integrity");
+        } else {
+            this.integrity = 1.0F;
+        }
+
+        this.seed = tag.getLong("seed");
         this.updateBlockState();
 
         better_structure_block$generated = tag.getBoolean("better_structure_block_generated");
@@ -156,65 +208,48 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
         //客户端看到结构方块就模拟按键请求加载，服务端就直接加载（似乎参数没同步，无法加载？）
         if(this.level != null && !better_structure_block$generated && BetterStructureBlockConfig.LOAD_DIRECTLY.get()){
             if(this.level instanceof ServerLevel serverLevel){
-                loadStructure(serverLevel);
+                placeStructureIfSameSize(serverLevel);
             }else {
                 Objects.requireNonNull(Minecraft.getInstance().getConnection()).send(new ServerboundSetStructureBlockPacket(getBlockPos(), StructureBlockEntity.UpdateType.LOAD_AREA, getMode(), getStructureName(), getStructurePos(), getStructureSize(), getMirror(), getRotation(), getMetaData(), isIgnoreEntities(), getShowAir(), getShowBoundingBox(), getIntegrity(), getSeed()));
             }
             better_structure_block$generated = true;
         }
+        ci.cancel();
     }
 
-    @Inject(method = "loadStructure(Lnet/minecraft/server/level/ServerLevel;ZLnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;)Z", at = @At("HEAD"), cancellable = true)
-    private void better_structure_block$loadStructure(ServerLevel level, boolean p_59849_, StructureTemplate template, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "placeStructure(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;)V", at = @At("HEAD"), cancellable = true)
+    private void better_structure_block$loadStructure(ServerLevel level, StructureTemplate structureTemplate, CallbackInfo ci) {
         if(BetterStructureBlockConfig.LOAD_DIRECTLY.get()){
             if(!better_structure_block$IS_LOADING){
                 better_structure_block$IS_LOADING = true;
-                if(better_structure_block$loadStructureOriginal(level, p_59849_, template)){
+                if(better_structure_block$loadStructureOriginal(level, structureTemplate)){
                     if(BetterStructureBlockConfig.DESTROY_AFTER_LOAD.get()) {
                         level.destroyBlock(this.getBlockPos(), false);
                     }
                     better_structure_block$IS_LOADING = false;
-                    cir.setReturnValue(true);
+                    ci.cancel();
                     return;
                 }
                 better_structure_block$IS_LOADING = false;
             }
-            cir.setReturnValue(false);
+            ci.cancel();
         }
     }
 
     @Unique
-    private boolean better_structure_block$loadStructureOriginal(ServerLevel serverLevel, boolean p_59849_, StructureTemplate structureTemplate) {
-        BlockPos $$3 = this.getBlockPos();
-        if (!StringUtil.isNullOrEmpty(structureTemplate.getAuthor())) {
-            this.author = structureTemplate.getAuthor();
+    private boolean better_structure_block$loadStructureOriginal(ServerLevel level, StructureTemplate structureTemplate) {
+        this.loadStructureInfo(structureTemplate);
+        StructurePlaceSettings structureplacesettings = (new StructurePlaceSettings()).setMirror(this.mirror).setRotation(this.rotation).setIgnoreEntities(this.ignoreEntities);
+        if (this.integrity < 1.0F) {
+            structureplacesettings.clearProcessors().addProcessor(new BlockRotProcessor(Mth.clamp(this.integrity, 0.0F, 1.0F))).setRandom(createRandom(this.seed));
         }
 
-        Vec3i $$4 = structureTemplate.getSize();
-        boolean $$5 = this.structureSize.equals($$4);
-        if (!$$5) {
-            this.structureSize = $$4;
-            this.setChanged();
-            BlockState $$6 = serverLevel.getBlockState($$3);
-            serverLevel.sendBlockUpdated($$3, $$6, $$6, 3);
-        }
-
-        if (p_59849_ && !$$5) {
-            return false;
-        } else {
-            StructurePlaceSettings $$7 = (new StructurePlaceSettings()).setMirror(this.mirror).setRotation(this.rotation).setIgnoreEntities(this.ignoreEntities);
-            if (this.integrity < 1.0F) {
-                $$7.clearProcessors().addProcessor(new BlockRotProcessor(Mth.clamp(this.integrity, 0.0F, 1.0F))).setRandom(createRandom(this.seed));
-            }
-
-            BlockPos $$8 = $$3.offset(this.structurePos);
-            structureTemplate.placeInWorld(serverLevel, $$8, $$8, $$7, createRandom(this.seed), 2);
-            return true;
-        }
+        BlockPos blockpos = this.getBlockPos().offset(this.structurePos);
+        return structureTemplate.placeInWorld(level, blockpos, blockpos, structureplacesettings, createRandom(this.seed), 2);
     }
 
     @Inject(method = "saveAdditional", at = @At("TAIL"))
-    protected void better_structure_block$saveAdditional(CompoundTag tag, CallbackInfo ci) {
+    protected void better_structure_block$saveAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         tag.putBoolean("better_structure_block_generated", better_structure_block$generated);
     }
 

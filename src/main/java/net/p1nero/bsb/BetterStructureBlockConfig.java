@@ -6,30 +6,30 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import java.util.Objects;
 
-@Mod.EventBusSubscriber(modid = BetterStructureBlockMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = BetterStructureBlockMod.MOD_ID)
 public class BetterStructureBlockConfig {
-    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
-    public static final ForgeConfigSpec.IntValue SEARCH_SIZE = createInt("search_size", 80, "搜索角落方块的范围");
-    public static final ForgeConfigSpec.BooleanValue LOAD_DIRECTLY = createBool("load_directly", false, "是否立即加载");
-    public static final ForgeConfigSpec.BooleanValue DESTROY_AFTER_LOAD = createBool("destroy_after_load", false, "是否在加载后自毁");
-    public static final ForgeConfigSpec.BooleanValue DISABLE_CLIENT_MESSAGE_DISPLAY = createBool("disable_client_message_display", true, "禁用客户端显示");
-    static final ForgeConfigSpec SPEC = BUILDER.build();
+    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+    public static final ModConfigSpec.IntValue SEARCH_SIZE = createInt("search_size", 80, "搜索角落方块的范围");
+    public static final ModConfigSpec.BooleanValue LOAD_DIRECTLY = createBool("load_directly", false, "是否立即加载");
+    public static final ModConfigSpec.BooleanValue DESTROY_AFTER_LOAD = createBool("destroy_after_load", false, "是否在加载后自毁");
+    public static final ModConfigSpec.BooleanValue DISABLE_CLIENT_MESSAGE_DISPLAY = createBool("disable_client_message_display", true, "禁用客户端显示");
+    static final ModConfigSpec SPEC = BUILDER.build();
 
-    private static ForgeConfigSpec.BooleanValue createBool(String key, boolean defaultValue, String... comment) {
+    private static ModConfigSpec.BooleanValue createBool(String key, boolean defaultValue, String... comment) {
         return BUILDER
                 .comment(comment)
                 .translation("config." + BetterStructureBlockMod.MOD_ID + "." + key)
                 .define(key, defaultValue);
     }
 
-    private static ForgeConfigSpec.IntValue createInt(String key, int defaultValue, String... comment) {
+    private static ModConfigSpec.IntValue createInt(String key, int defaultValue, String... comment) {
         return BUILDER
                 .comment(comment)
                 .translation("config." + BetterStructureBlockMod.MOD_ID + "." + key)
@@ -64,7 +64,7 @@ public class BetterStructureBlockConfig {
         );
     }
 
-    private static <T> int setConfig(ForgeConfigSpec.ConfigValue<T> config, T value, CommandSourceStack stack) {
+    private static <T> int setConfig(ModConfigSpec.ConfigValue<T> config, T value, CommandSourceStack stack) {
         config.set(value);
         if (stack.isPlayer()) {
             Objects.requireNonNull(stack.getPlayer()).sendSystemMessage(Component.literal("Successfully set to : " + value));

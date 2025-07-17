@@ -2,6 +2,7 @@ package net.p1nero.bsb.mixin;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.PacketUtils;
 import net.minecraft.network.protocol.game.ServerboundSetStructureBlockPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -30,60 +31,63 @@ public class ServerGamePacketListenerImplMixin  {
      */
     @Inject(method = "handleSetStructureBlock(Lnet/minecraft/network/protocol/game/ServerboundSetStructureBlockPacket;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V", shift = At.Shift.AFTER), cancellable = true)
     private void better_structure_block$handleSetStructureBlock(ServerboundSetStructureBlockPacket packet, CallbackInfo ci) {
-        BlockPos blockpos = packet.getPos();
-        BlockState blockstate = this.player.level().getBlockState(blockpos);
-        BlockEntity blockentity = this.player.level().getBlockEntity(blockpos);
-        if (blockentity instanceof StructureBlockEntity blockEntity) {
-            blockEntity.setMode(packet.getMode());
-            blockEntity.setStructureName(packet.getName());
-            blockEntity.setStructurePos(packet.getOffset());
-            blockEntity.setStructureSize(packet.getSize());
-            blockEntity.setMirror(packet.getMirror());
-            blockEntity.setRotation(packet.getRotation());
-            blockEntity.setMetaData(packet.getData());
-            blockEntity.setIgnoreEntities(packet.isIgnoreEntities());
-            blockEntity.setShowAir(packet.isShowAir());
-            blockEntity.setShowBoundingBox(packet.isShowBoundingBox());
-            blockEntity.setIntegrity(packet.getIntegrity());
-            blockEntity.setSeed(packet.getSeed());
-            if (blockEntity.hasStructureName()) {
-                String s = blockEntity.getStructureName();
-                if (packet.getUpdateType() == StructureBlockEntity.UpdateType.SAVE_AREA) {
-                    if (blockEntity.saveStructure()) {
-                        this.player.displayClientMessage(Component.translatable("structure_block.save_success", s), false);
-                    } else {
-                        this.player.displayClientMessage(Component.translatable("structure_block.save_failure", s), false);
-                    }
-                } else if (packet.getUpdateType() == StructureBlockEntity.UpdateType.LOAD_AREA) {
-                    BetterStructureBlockMod.LOGGER.info("try load custom structure block on server: {}", blockEntity.getStructureName());
-                    if (!blockEntity.isStructureLoadable()) {
-                        this.player.displayClientMessage(Component.translatable("structure_block.load_not_found", s), false);
-                    } else if (blockEntity.loadStructure(this.player.serverLevel())) {
-                        if(!BetterStructureBlockConfig.DISABLE_CLIENT_MESSAGE_DISPLAY.get()){
-                            this.player.displayClientMessage(Component.translatable("structure_block.load_success", s), false);
+        PacketUtils.ensureRunningOnSameThread(packet, (ServerGamePacketListenerImpl)(Object)this, this.player.serverLevel());
+        if (this.player.canUseGameMasterBlocks()) {
+            BlockPos blockpos = packet.getPos();
+            BlockState blockstate = this.player.level().getBlockState(blockpos);
+            BlockEntity var5 = this.player.level().getBlockEntity(blockpos);
+            if (var5 instanceof StructureBlockEntity blockEntity) {
+                blockEntity.setMode(packet.getMode());
+                blockEntity.setStructureName(packet.getName());
+                blockEntity.setStructurePos(packet.getOffset());
+                blockEntity.setStructureSize(packet.getSize());
+                blockEntity.setMirror(packet.getMirror());
+                blockEntity.setRotation(packet.getRotation());
+                blockEntity.setMetaData(packet.getData());
+                blockEntity.setIgnoreEntities(packet.isIgnoreEntities());
+                blockEntity.setShowAir(packet.isShowAir());
+                blockEntity.setShowBoundingBox(packet.isShowBoundingBox());
+                blockEntity.setIntegrity(packet.getIntegrity());
+                blockEntity.setSeed(packet.getSeed());
+                if (blockEntity.hasStructureName()) {
+                    String s = blockEntity.getStructureName();
+                    if (packet.getUpdateType() == StructureBlockEntity.UpdateType.SAVE_AREA) {
+                        if (blockEntity.saveStructure()) {
+                            this.player.displayClientMessage(Component.translatable("structure_block.save_success", s), false);
+                        } else {
+                            this.player.displayClientMessage(Component.translatable("structure_block.save_failure", s), false);
                         }
-                    } else {
-                        if(BetterStructureBlockConfig.LOAD_DIRECTLY.get()){
-                            BetterStructureBlockMod.LOGGER.info("try load again.");
-                            blockEntity.loadStructure(this.player.serverLevel());
-                            BetterStructureBlockMod.LOGGER.info("try load custom structure block AGAIN on server: {}", blockEntity.getStructureName());
-                        }else {
-                            this.player.displayClientMessage(Component.translatable("structure_block.load_prepare", s), false);
+                    } else if (packet.getUpdateType() == StructureBlockEntity.UpdateType.LOAD_AREA) {
+                        BetterStructureBlockMod.LOGGER.info("try load custom structure block on server: {}", blockEntity.getStructureName());
+                        if (!blockEntity.isStructureLoadable()) {
+                            this.player.displayClientMessage(Component.translatable("structure_block.load_not_found", s), false);
+                        } else if (blockEntity.placeStructureIfSameSize(this.player.serverLevel())) {
+                            if(!BetterStructureBlockConfig.DISABLE_CLIENT_MESSAGE_DISPLAY.get()){
+                                this.player.displayClientMessage(Component.translatable("structure_block.load_success", s), false);
+                            }
+                        } else {
+                            if(BetterStructureBlockConfig.LOAD_DIRECTLY.get()){
+                                BetterStructureBlockMod.LOGGER.info("try load again.");
+                                blockEntity.placeStructureIfSameSize(this.player.serverLevel());
+                                BetterStructureBlockMod.LOGGER.info("try load custom structure block AGAIN on server: {}", blockEntity.getStructureName());
+                            }else {
+                                this.player.displayClientMessage(Component.translatable("structure_block.load_prepare", s), false);
+                            }
+                        }
+                    } else if (packet.getUpdateType() == StructureBlockEntity.UpdateType.SCAN_AREA) {
+                        if (blockEntity.detectSize()) {
+                            this.player.displayClientMessage(Component.translatable("structure_block.size_success", s), false);
+                        } else {
+                            this.player.displayClientMessage(Component.translatable("structure_block.size_failure"), false);
                         }
                     }
-                } else if (packet.getUpdateType() == StructureBlockEntity.UpdateType.SCAN_AREA) {
-                    if (blockEntity.detectSize()) {
-                        this.player.displayClientMessage(Component.translatable("structure_block.size_success", s), false);
-                    } else {
-                        this.player.displayClientMessage(Component.translatable("structure_block.size_failure"), false);
-                    }
+                } else {
+                    this.player.displayClientMessage(Component.translatable("structure_block.invalid_structure_name", packet.getName()), false);
                 }
-            } else {
-                this.player.displayClientMessage(Component.translatable("structure_block.invalid_structure_name", packet.getName()), false);
-            }
 
-            blockEntity.setChanged();
-            this.player.level().sendBlockUpdated(blockpos, blockstate, blockstate, 3);
+                blockEntity.setChanged();
+                this.player.level().sendBlockUpdated(blockpos, blockstate, blockstate, 3);
+            }
             ci.cancel();
         }
 
