@@ -9,5 +9,8 @@
     "defaultRequire": 1
   },
   "refmap": "better_structure_block.mixin-refmap.json",
-  "minVersion": "0.8"
+  "minVersion": "0.8",
+  "client": [
+    "StructureBlockEntityMixin"
+  ]
 }

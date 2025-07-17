@@ -9,8 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.StructureBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.p1nero.bsb.BetterStructureBlockMod;
-import net.p1nero.bsb.ModConfig;
-import net.p1nero.bsb.block.BetterStructureBlockEntity;
+import net.p1nero.bsb.BetterStructureBlockConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -30,11 +29,11 @@ public class ServerGamePacketListenerImplMixin  {
      * 绕开玩家权限认证，立即加载。并根据配置项选择是否输出成功构造的信息
      */
     @Inject(method = "handleSetStructureBlock(Lnet/minecraft/network/protocol/game/ServerboundSetStructureBlockPacket;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V", shift = At.Shift.AFTER), cancellable = true)
-    private void injected(ServerboundSetStructureBlockPacket packet, CallbackInfo ci) {
+    private void better_structure_block$handleSetStructureBlock(ServerboundSetStructureBlockPacket packet, CallbackInfo ci) {
         BlockPos blockpos = packet.getPos();
         BlockState blockstate = this.player.level().getBlockState(blockpos);
         BlockEntity blockentity = this.player.level().getBlockEntity(blockpos);
-        if (blockentity instanceof BetterStructureBlockEntity blockEntity) {
+        if (blockentity instanceof StructureBlockEntity blockEntity) {
             blockEntity.setMode(packet.getMode());
             blockEntity.setStructureName(packet.getName());
             blockEntity.setStructurePos(packet.getOffset());
@@ -56,18 +55,18 @@ public class ServerGamePacketListenerImplMixin  {
                         this.player.displayClientMessage(Component.translatable("structure_block.save_failure", s), false);
                     }
                 } else if (packet.getUpdateType() == StructureBlockEntity.UpdateType.LOAD_AREA) {
-                    BetterStructureBlockMod.LOGGER.info("try to load custom structure block on server: {}", blockEntity.getStructureName());
+                    BetterStructureBlockMod.LOGGER.info("try load custom structure block on server: {}", blockEntity.getStructureName());
                     if (!blockEntity.isStructureLoadable()) {
                         this.player.displayClientMessage(Component.translatable("structure_block.load_not_found", s), false);
                     } else if (blockEntity.loadStructure(this.player.serverLevel())) {
-                        if(!ModConfig.DISABLE_CLIENT_MESSAGE_DISPLAY.get()){
+                        if(!BetterStructureBlockConfig.DISABLE_CLIENT_MESSAGE_DISPLAY.get()){
                             this.player.displayClientMessage(Component.translatable("structure_block.load_success", s), false);
                         }
                     } else {
-                        if(ModConfig.LOAD_DIRECTLY.get()){
-                            this.player.displayClientMessage(Component.literal("Try to load again."), false);
+                        if(BetterStructureBlockConfig.LOAD_DIRECTLY.get()){
+                            BetterStructureBlockMod.LOGGER.info("try load again.");
                             blockEntity.loadStructure(this.player.serverLevel());
-                            BetterStructureBlockMod.LOGGER.info("try to load custom structure block AGAIN on server: {}", blockEntity.getStructureName());
+                            BetterStructureBlockMod.LOGGER.info("try load custom structure block AGAIN on server: {}", blockEntity.getStructureName());
                         }else {
                             this.player.displayClientMessage(Component.translatable("structure_block.load_prepare", s), false);
                         }
