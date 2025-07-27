@@ -3,14 +3,14 @@
   "package": "net.p1nero.bsb.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "ServerGamePacketListenerImplMixin"
+    "ServerGamePacketListenerImplMixin",
+    "StructureBlockEntityMixin"
+  ],
+  "client": [
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "refmap": "better_structure_block.mixin-refmap.json",
-  "minVersion": "0.8",
-  "client": [
-    "StructureBlockEntityMixin"
-  ]
+  "minVersion": "0.8"
 }

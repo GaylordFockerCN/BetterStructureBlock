@@ -20,7 +20,10 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.BlockRotProcessor;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.p1nero.bsb.BetterStructureBlockConfig;
+import net.p1nero.bsb.DistHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -42,63 +45,54 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
         super(p_155228_, p_155229_, p_155230_);
     }
 
-    @Shadow public abstract StructureMode getMode();
+    @Shadow
+    public abstract StructureMode getMode();
 
-    @Shadow protected abstract Stream<BlockPos> getRelatedCorners(BlockPos p_155792_, BlockPos p_155793_);
+    @Shadow
+    protected abstract Stream<BlockPos> getRelatedCorners(BlockPos p_155792_, BlockPos p_155793_);
 
     @Shadow
     private static Optional<BoundingBox> calculateEnclosingBoundingBox(BlockPos p_155795_, Stream<BlockPos> p_155796_) {
         return Optional.empty();
     }
 
-    @Shadow private BlockPos structurePos;
+    @Shadow
+    private BlockPos structurePos;
 
-    @Shadow private Vec3i structureSize;
+    @Shadow
+    private Vec3i structureSize;
 
-    @Shadow public abstract void setStructurePos(BlockPos p_59886_);
+    @Shadow
+    public abstract void setStructurePos(BlockPos p_59886_);
 
-    @Shadow public abstract void setStructureSize(Vec3i p_155798_);
+    @Shadow
+    public abstract void setStructureSize(Vec3i p_155798_);
 
-    @Shadow protected abstract void updateBlockState();
+    @Shadow
+    protected abstract void updateBlockState();
 
-    @Shadow public abstract String getStructureName();
-
-    @Shadow public abstract BlockPos getStructurePos();
-
-    @Shadow public abstract Vec3i getStructureSize();
-
-    @Shadow public abstract Mirror getMirror();
-
-    @Shadow public abstract Rotation getRotation();
-
-    @Shadow public abstract String getMetaData();
-
-    @Shadow public abstract boolean isIgnoreEntities();
-
-    @Shadow public abstract boolean getShowAir();
-
-    @Shadow public abstract boolean getShowBoundingBox();
-
-    @Shadow public abstract float getIntegrity();
-
-    @Shadow public abstract long getSeed();
-
-    @Shadow public String author;
+    @Shadow
+    public String author;
 
     @Shadow
     public static RandomSource createRandom(long p_222889_) {
         return null;
     }
 
-    @Shadow private long seed;
+    @Shadow
+    private long seed;
 
-    @Shadow private boolean ignoreEntities;
+    @Shadow
+    private boolean ignoreEntities;
 
-    @Shadow private Rotation rotation;
+    @Shadow
+    private Rotation rotation;
 
-    @Shadow private Mirror mirror;
+    @Shadow
+    private Mirror mirror;
 
-    @Shadow private float integrity;
+    @Shadow
+    private float integrity;
 
     /**
      * 调检测范围
@@ -146,20 +140,18 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
         setStructureSize(new BlockPos(l, i1, j1));
         this.updateBlockState();
 
-        //当加载的时候强制加载一下区块，为了在结构内包含结构方块时以生成结构，省的调用红石。
-        //客户端看到结构方块就模拟按键请求加载，服务端就直接加载（似乎参数没同步，无法加载？）
-        if(this.level != null && level.isClientSide && BetterStructureBlockConfig.LOAD_DIRECTLY.get()){
-            Objects.requireNonNull(Minecraft.getInstance().getConnection()).send(new ServerboundSetStructureBlockPacket(getBlockPos(), StructureBlockEntity.UpdateType.LOAD_AREA, getMode(), getStructureName(), getStructurePos(), getStructureSize(), getMirror(), getRotation(), getMetaData(), isIgnoreEntities(), getShowAir(), getShowBoundingBox(), getIntegrity(), getSeed()));
-        }
+        //当加载结构方块的时候加载一下结构，为了在结构内包含结构方块时以生成结构，省的调用红石。
+        //客户端看到结构方块就模拟按键请求加载，服务端似乎参数没同步，无法加载？
+        DistHelper.requestStructureLoad((StructureBlockEntity) (Object) this);
     }
 
     @Inject(method = "loadStructure(Lnet/minecraft/server/level/ServerLevel;ZLnet/minecraft/world/level/levelgen/structure/templatesystem/StructureTemplate;)Z", at = @At("HEAD"), cancellable = true)
     private void better_structure_block$loadStructure(ServerLevel level, boolean p_59849_, StructureTemplate template, CallbackInfoReturnable<Boolean> cir) {
-        if(BetterStructureBlockConfig.LOAD_DIRECTLY.get()){
-            if(!better_structure_block$IS_LOADING){
+        if (BetterStructureBlockConfig.LOAD_DIRECTLY.get()) {
+            if (!better_structure_block$IS_LOADING) {
                 better_structure_block$IS_LOADING = true;
-                if(better_structure_block$loadStructureOriginal(level, p_59849_, template)){
-                    if(BetterStructureBlockConfig.DESTROY_AFTER_LOAD.get()) {
+                if (better_structure_block$loadStructureOriginal(level, p_59849_, template)) {
+                    if (BetterStructureBlockConfig.DESTROY_AFTER_LOAD.get()) {
                         level.destroyBlock(this.getBlockPos(), false);
                     }
                     better_structure_block$IS_LOADING = false;
