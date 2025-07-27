@@ -21,6 +21,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.BlockRotProce
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.p1nero.bsb.BetterStructureBlockConfig;
+import net.p1nero.bsb.DistHelper;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -199,7 +200,7 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
         //当加载的时候强制加载一下区块，为了在结构内包含结构方块时以生成结构，省的调用红石。
         //客户端看到结构方块就模拟按键请求加载，服务端就直接加载（似乎参数没同步，无法加载？）
         if(this.level != null && this.level.isClientSide && BetterStructureBlockConfig.LOAD_DIRECTLY.get()){
-            Objects.requireNonNull(Minecraft.getInstance().getConnection()).send(new ServerboundSetStructureBlockPacket(getBlockPos(), StructureBlockEntity.UpdateType.LOAD_AREA, getMode(), getStructureName(), getStructurePos(), getStructureSize(), getMirror(), getRotation(), getMetaData(), isIgnoreEntities(), getShowAir(), getShowBoundingBox(), getIntegrity(), getSeed()));
+            DistHelper.requestStructureLoad((StructureBlockEntity) (Object) this);
         }
         ci.cancel();
     }
