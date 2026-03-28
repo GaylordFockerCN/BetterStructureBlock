@@ -15,7 +15,6 @@ import net.p1nero.bsb.BetterStructureBlockConfig;
 import net.p1nero.bsb.BetterStructureBlockMod;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -56,7 +55,10 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
      * 方块读数据的时候level还是null，于是将它添加到队列里慢慢等才合理...
      */
     @Inject(method = "loadAdditional", at = @At("TAIL"))
-    public void better_structure_block$load(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
+    public void better_structure_block$loadAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
+        if(level != null && level.isClientSide) {
+            return;
+        }
         if(BetterStructureBlockConfig.LOAD_IMMEDIATELY.get()){
             BetterStructureBlockMod.addStructureBlock((StructureBlockEntity) (Object)this);
         }
@@ -69,17 +71,15 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
     private void better_structure_block$loadStructure(ServerLevel level, StructureTemplate structureTemplate, Operation<Void> original) {
         if(!BetterStructureBlockConfig.LOAD_IMMEDIATELY.get()){
             original.call(level, structureTemplate);
+            return;
         }
-        if(BetterStructureBlockMod.IS_LOADING) {
+        if(BetterStructureBlockMod.LOADING) {
             BetterStructureBlockMod.addStructureBlock((StructureBlockEntity) (Object)this);
             return;
         }
-        BetterStructureBlockMod.IS_LOADING = true;
+        BetterStructureBlockMod.LOADING = true;
         original.call(level, structureTemplate);
-        BetterStructureBlockMod.IS_LOADING = false;
-        if(BetterStructureBlockConfig.DESTROY_AFTER_LOAD.get()) {
-            level.destroyBlock(this.getBlockPos(), false);
-        }
+        BetterStructureBlockMod.LOADING = false;
     }
 
 }
