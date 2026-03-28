@@ -3,14 +3,13 @@ package net.p1nero.bsb.mixin;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.StructureBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.storage.ValueInput;
 import net.p1nero.bsb.BetterStructureBlockConfig;
 import net.p1nero.bsb.BetterStructureBlockMod;
 import org.spongepowered.asm.mixin.Mixin;
@@ -55,7 +54,7 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
      * 方块读数据的时候level还是null，于是将它添加到队列里慢慢等才合理...
      */
     @Inject(method = "loadAdditional", at = @At("TAIL"))
-    public void better_structure_block$loadAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
+    public void better_structure_block$loadAdditional(ValueInput input, CallbackInfo ci) {
         if(level != null && level.isClientSide()) {
             return;
         }

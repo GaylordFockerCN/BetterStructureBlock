@@ -15,10 +15,10 @@ public class ServerGamePacketListenerImplMixin {
     /**
      * 隐藏消息
      */
-    @WrapOperation(method = "handleSetStructureBlock(Lnet/minecraft/network/protocol/game/ServerboundSetStructureBlockPacket;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;displayClientMessage(Lnet/minecraft/network/chat/Component;Z)V"))
-    private void better_structure_block$handleSetStructureBlock(ServerPlayer instance, Component chatComponent, boolean actionBar, Operation<Void> original) {
+    @WrapOperation(method = "handleSetStructureBlock(Lnet/minecraft/network/protocol/game/ServerboundSetStructureBlockPacket;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;sendSystemMessage(Lnet/minecraft/network/chat/Component;)V"))
+    private void better_structure_block$handleSetStructureBlock(ServerPlayer instance, Component message, Operation<Void> original) {
         if (instance.isCreative() || !BetterStructureBlockConfig.DISABLE_CLIENT_MESSAGE.get()) {
-            original.call(instance, chatComponent, actionBar);
+            original.call(instance, message);
         }
     }
 
