@@ -38,8 +38,8 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
     public Stream<BlockPos> better_structure_block$detectSize(StructureBlockEntity instance, BlockPos minPos, BlockPos maxPos) {
         BlockPos blockPos = this.getBlockPos();
         int size = BetterStructureBlockConfig.SEARCH_SIZE.getAsInt();
-        BlockPos blockPos1 = new BlockPos(blockPos.getX() - size, this.level.getMinBuildHeight(), blockPos.getZ() - size);
-        BlockPos blockPos2 = new BlockPos(blockPos.getX() + size, this.level.getMaxBuildHeight() - 1, blockPos.getZ() + size);
+        BlockPos blockPos1 = new BlockPos(blockPos.getX() - size, this.level.getMinY(), blockPos.getZ() - size);
+        BlockPos blockPos2 = new BlockPos(blockPos.getX() + size, this.level.getMaxY() - 1, blockPos.getZ() + size);
         return getRelatedCorners(blockPos1, blockPos2);
     }
 
@@ -56,7 +56,7 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
      */
     @Inject(method = "loadAdditional", at = @At("TAIL"))
     public void better_structure_block$loadAdditional(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
-        if(level != null && level.isClientSide) {
+        if(level != null && level.isClientSide()) {
             return;
         }
         if(BetterStructureBlockConfig.LOAD_IMMEDIATELY.get()){

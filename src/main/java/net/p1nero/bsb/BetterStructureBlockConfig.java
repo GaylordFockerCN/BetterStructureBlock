@@ -41,7 +41,7 @@ public class BetterStructureBlockConfig {
     @SubscribeEvent
     public static void registerCommands(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-        dispatcher.register(Commands.literal("better_structure_block").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
+        dispatcher.register(Commands.literal("better_structure_block").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Commands.literal("load_immediately")
                         .then(Commands.argument("value", BoolArgumentType.bool())
                                 .executes((context) -> setConfig(LOAD_IMMEDIATELY, BoolArgumentType.getBool(context, "value"), context.getSource()))
