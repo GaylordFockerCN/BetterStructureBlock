@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.StructureBlockEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -18,7 +19,7 @@ public class BetterStructureBlockMod {
     public static final Logger LOGGER = LogUtils.getLogger();
     public static final String MOD_ID = "better_structure_block";
 
-    public static boolean IS_LOADING = false;
+    public static boolean LOADING = false;
 
     private static final Queue<StructureBlockEntity> STRUCTURE_BLOCK_ENTITIES = new ArrayDeque<>();
 
@@ -28,6 +29,7 @@ public class BetterStructureBlockMod {
 
     public BetterStructureBlockMod(){
         MinecraftForge.EVENT_BUS.addListener(this::serverTick);
+        MinecraftForge.EVENT_BUS.addListener(this::serverStop);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, BetterStructureBlockConfig.SPEC);
     }
 
@@ -38,14 +40,22 @@ public class BetterStructureBlockMod {
         if(!BetterStructureBlockConfig.LOAD_IMMEDIATELY.get()) {
             return;
         }
-        if(!IS_LOADING) {
+        if(!LOADING) {
             StructureBlockEntity structureBlockEntity = STRUCTURE_BLOCK_ENTITIES.peek();
             if(structureBlockEntity != null && structureBlockEntity.getLevel() instanceof ServerLevel serverLevel) {
                 if(structureBlockEntity.loadStructure(serverLevel) || !structureBlockEntity.isStructureLoadable()) {
                     STRUCTURE_BLOCK_ENTITIES.poll();
+                    if(BetterStructureBlockConfig.DESTROY_AFTER_LOAD.get()) {
+                        serverLevel.destroyBlock(structureBlockEntity.getBlockPos(), false);
+                    }
                 }
             }
         }
+    }
+
+    public void serverStop(ServerStoppedEvent event) {
+        LOADING = false;
+        STRUCTURE_BLOCK_ENTITIES.clear();
     }
 
 }

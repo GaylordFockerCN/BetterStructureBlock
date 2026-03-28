@@ -10,7 +10,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.StructureBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.p1nero.bsb.BetterStructureBlockConfig;
 import net.p1nero.bsb.BetterStructureBlockMod;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,9 +30,6 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
 
     @Shadow
     protected abstract Stream<BlockPos> getRelatedCorners(BlockPos p_155792_, BlockPos p_155793_);
-
-    @Shadow
-    public abstract boolean isStructureLoadable();
 
     /**
      * 调检测范围
@@ -76,16 +72,13 @@ public abstract class StructureBlockEntityMixin extends BlockEntity {
         if(!BetterStructureBlockConfig.LOAD_IMMEDIATELY.get()){
             return original.call(level, b, structureTemplate);
         }
-        if(BetterStructureBlockMod.IS_LOADING) {
+        if(BetterStructureBlockMod.LOADING) {
             BetterStructureBlockMod.addStructureBlock((StructureBlockEntity) (Object)this);
             return false;
         }
-        BetterStructureBlockMod.IS_LOADING = true;
+        BetterStructureBlockMod.LOADING = true;
         boolean toReturn = original.call(level, b, structureTemplate);
-        BetterStructureBlockMod.IS_LOADING = false;
-        if(BetterStructureBlockConfig.DESTROY_AFTER_LOAD.get()) {
-            level.destroyBlock(this.getBlockPos(), false);
-        }
+        BetterStructureBlockMod.LOADING = false;
         return toReturn;
     }
 
