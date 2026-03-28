@@ -5,6 +5,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+/**
+ * 解除大小限制
+ */
 @Mixin(ServerboundSetStructureBlockPacket.class)
 public class ServerboundSetStructureBlockPacketMixin {
 

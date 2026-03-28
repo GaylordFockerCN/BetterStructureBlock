@@ -3,6 +3,7 @@ package net.p1nero.bsb;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -17,9 +18,9 @@ import java.util.Objects;
 public class BetterStructureBlockConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
     public static final ModConfigSpec.IntValue SEARCH_SIZE = createInt("search_size", 80, "搜索角落方块的范围");
-    public static final ModConfigSpec.BooleanValue LOAD_DIRECTLY = createBool("load_directly", false, "是否立即加载");
+    public static final ModConfigSpec.BooleanValue LOAD_IMMEDIATELY = createBool("load_immediately", false, "是否立即加载");
     public static final ModConfigSpec.BooleanValue DESTROY_AFTER_LOAD = createBool("destroy_after_load", false, "是否在加载后自毁");
-    public static final ModConfigSpec.BooleanValue DISABLE_CLIENT_MESSAGE_DISPLAY = createBool("disable_client_message_display", true, "禁用客户端显示");
+    public static final ModConfigSpec.BooleanValue DISABLE_CLIENT_MESSAGE = createBool("disable_client_message", true, "禁用客户端显示");
     static final ModConfigSpec SPEC = BUILDER.build();
 
     private static ModConfigSpec.BooleanValue createBool(String key, boolean defaultValue, String... comment) {
@@ -41,14 +42,14 @@ public class BetterStructureBlockConfig {
     public static void registerCommands(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
         dispatcher.register(Commands.literal("better_structure_block").requires((commandSourceStack) -> commandSourceStack.hasPermission(2))
-                .then(Commands.literal("load_directly")
+                .then(Commands.literal("load_immediately")
                         .then(Commands.argument("value", BoolArgumentType.bool())
-                                .executes((context) -> setConfig(LOAD_DIRECTLY, BoolArgumentType.getBool(context, "value"), context.getSource()))
+                                .executes((context) -> setConfig(LOAD_IMMEDIATELY, BoolArgumentType.getBool(context, "value"), context.getSource()))
                         )
                 )
-                .then(Commands.literal("disable_client_message_display")
+                .then(Commands.literal("disable_client_message")
                         .then(Commands.argument("value", BoolArgumentType.bool())
-                                .executes((context) -> setConfig(DISABLE_CLIENT_MESSAGE_DISPLAY, BoolArgumentType.getBool(context, "value"), context.getSource()))
+                                .executes((context) -> setConfig(DISABLE_CLIENT_MESSAGE, BoolArgumentType.getBool(context, "value"), context.getSource()))
                         )
                 )
                 .then(Commands.literal("destroy_after_load")
@@ -67,7 +68,7 @@ public class BetterStructureBlockConfig {
     private static <T> int setConfig(ModConfigSpec.ConfigValue<T> config, T value, CommandSourceStack stack) {
         config.set(value);
         if (stack.isPlayer()) {
-            Objects.requireNonNull(stack.getPlayer()).sendSystemMessage(Component.literal("Successfully set to : " + value));
+            Objects.requireNonNull(stack.getPlayer()).sendSystemMessage(Component.literal("Successfully set to : " + value).withStyle(ChatFormatting.GREEN));
         }
         return 0;
     }
